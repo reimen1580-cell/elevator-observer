@@ -10,24 +10,21 @@
 :root{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#1d2939;background:#f4f7fb}
 *{box-sizing:border-box}
 body{margin:0;padding:16px 14px 40px;max-width:650px;margin-inline:auto}
-h1{font-size:25px;margin:8px 0}
-h2{font-size:18px;margin:0 0 14px}
-p{line-height:1.6}
+h1{font-size:25px;margin:8px 0}h2{font-size:18px;margin:0 0 14px}p{line-height:1.6}
 .sub{color:#667085;font-size:13px;margin-top:4px}
 .card{background:white;border:1px solid #e1e7ef;border-radius:18px;padding:17px;margin:14px 0;box-shadow:0 3px 12px #1d293908}
 label{display:block;font-weight:650;margin:15px 0 8px}
 button,select{font:inherit}
 button{border:1px solid #d0d5dd;border-radius:12px;padding:11px 13px;background:white;color:#1d2939;cursor:pointer}
-button:active{opacity:.7}
+button:active{opacity:.7}button:disabled{opacity:.55;cursor:default}
 button.primary{background:#245bdb;color:white;border-color:#245bdb;font-weight:700;width:100%;padding:14px}
 button.selected{background:#eaf1ff;border-color:#245bdb;color:#1746a2;font-weight:700}
-.choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
-.choices button{padding:12px 2px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choices button{padding:13px 2px}
 select{width:100%;padding:12px;border:1px solid #d0d5dd;border-radius:12px;background:white}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat{background:#f5f8ff;border-radius:13px;padding:13px}
-.stat .big{font-size:26px;font-weight:800;margin-top:5px}
+.stat .big{font-size:26px;font-weight:800;margin-top:5px;overflow-wrap:anywhere}
 .small{font-size:12px;color:#667085;line-height:1.5}
 .entry{border-top:1px solid #eaecf0;padding:13px 0}
 .entry:first-child{border-top:0}
@@ -35,52 +32,47 @@ select{width:100%;padding:12px;border:1px solid #d0d5dd;border-radius:12px;backg
 .entry button{font-size:12px;padding:6px 9px}
 .empty{color:#667085;font-size:14px;text-align:center;padding:16px 0}
 .rowbtn{display:flex;gap:8px;flex-wrap:wrap}
-.rowbtn button{flex:1}
+.rowbtn button{flex:1;min-width:130px}
 .notice{font-size:12px;color:#667085;line-height:1.6}
-footer{font-size:12px;color:#667085;text-align:center;padding:10px}
+.divider{height:1px;background:#eaecf0;margin:17px 0}
+.status{font-size:13px;line-height:1.5;margin:10px 0 0}
+.status.error{color:#b42318}.status.ok{color:#067647}
+footer{font-size:12px;color:#667085;line-height:1.6;text-align:center;padding:10px}
 </style>
 </head>
 <body>
 <header>
   <div style="font-size:13px;color:#245bdb;font-weight:800">OBSERVATION LOG</div>
   <h1>エレベーター観測ノート</h1>
-  <div class="sub">呼び出す前の位置を記録して、確率を調べよう。</div>
+  <div class="sub">呼び出す前の位置を記録して、実際の割合を調べよう。</div>
 </header>
 
 <section class="card">
   <h2>① 今いる階</h2>
   <div class="choices" id="myFloor">
-    <button data-value="1" class="selected">1階</button>
-    <button data-value="9">9階</button>
+    <button type="button" data-value="1" class="selected">1階</button>
+    <button type="button" data-value="9">9階</button>
   </div>
   <p class="small">観測する場所を選んでね。</p>
 </section>
 
 <section class="card">
   <h2>② エレベーターの位置</h2>
-  <label for="e1">エレベーター 1</label>
-  <select id="e1"></select>
-  <label for="e2">エレベーター 2</label>
-  <select id="e2"></select>
-  <label for="period">観測した時間帯</label>
-  <select id="period">
-    <option>早朝（5〜8時）</option>
-    <option>午前（9〜11時）</option>
-    <option>昼（12〜15時）</option>
-    <option>夕方（16〜18時）</option>
-    <option>夜（19〜22時）</option>
-    <option>深夜（23〜4時）</option>
-  </select>
-  <p class="notice">※ 呼び出しボタンを押す前に、2台の位置を確認して記録してね。位置が分からない場合は、推測で入力せず確認できた記録だけ残そう。</p>
-  <button class="primary" id="save">この観測を記録する</button>
-  <p id="message" class="small" aria-live="polite"></p>
+  <label for="e1">エレベーター1</label>
+  <select id="e1"><option value="">位置を選択</option></select>
+  <label for="e2">エレベーター2</label>
+  <select id="e2"><option value="">位置を選択</option></select>
+  <p class="notice">位置が分からない・移動中で特定できない場合は「不明・移動中」を選んでね。推測で階を入力しないのが大事！</p>
+  <div id="timeNow" class="small"></div>
+  <button type="button" class="primary" id="save">この観測を記録する</button>
+  <p id="message" class="status" aria-live="polite"></p>
 </section>
 
 <section class="card">
   <h2>③ 観測結果</h2>
   <div class="stats">
     <div class="stat">
-      <div class="small">観測した回数</div>
+      <div class="small">記録した回数</div>
       <div class="big" id="total">0回</div>
     </div>
     <div class="stat">
@@ -89,161 +81,515 @@ footer{font-size:12px;color:#667085;text-align:center;padding:10px}
     </div>
   </div>
   <p class="small" id="rateDetail">記録が増えると、ここに結果が表示されるよ。</p>
-  <div class="divider" style="height:1px;background:#eaecf0;margin:17px 0"></div>
+  <div class="divider"></div>
   <h2 style="font-size:16px">階ごとの結果</h2>
   <div id="byFloor"></div>
-  <p class="notice">割合＝「自分の階に1台以上いた観測回数」÷「その階での観測回数」。これは記録した状況での割合で、将来の結果を保証するものではないよ。</p>
+  <p class="notice">割合は「結果を判定できた観測」のうち、自分の階に1台以上いた割合だよ。不明な位置があって結果を確定できない記録は、割合の計算から除外するよ。</p>
 </section>
 
 <section class="card">
   <h2>④ 観測履歴</h2>
   <div id="history"><div class="empty">まだ記録がないよ。</div></div>
-  <div class="rowbtn" style="margin-top:12px">
-    <button id="export">CSVを書き出す</button>
-    <button id="copy">CSVをコピー</button>
+  <div class="divider"></div>
+  <h2 style="font-size:16px">バックアップ</h2>
+  <div class="rowbtn">
+    <button type="button" id="jsonExport">JSONで保存</button>
+    <button type="button" id="jsonImportButton">バックアップを読み込む</button>
   </div>
-  <p class="notice">バックアップは定期的に取っておこう。記録はこのiPhoneのSafari内に保存されるよ。</p>
-  <button id="clear" style="color:#b42318;width:100%;margin-top:8px">すべての記録を削除</button>
+  <input type="file" id="jsonImportFile" accept=".json,application/json" hidden>
+  <div class="rowbtn" style="margin-top:8px">
+    <button type="button" id="csvExport">CSVを書き出す</button>
+    <button type="button" id="csvCopy">CSVをコピー</button>
+  </div>
+  <p class="notice">JSONは、このアプリに記録を戻すためのバックアップ。CSVは表計算ソフトなどで確認するためのファイルだよ。</p>
+  <button type="button" id="clear" style="color:#b42318;width:100%;margin-top:8px">すべての記録を削除</button>
 </section>
-<footer>記録はこのブラウザ内に保存されます。Safariのサイトデータを消すと失われる場合があります。</footer>
+
+<footer>記録はこのブラウザ内に保存されます。Safariのサイトデータを消すと失われる場合があります。大切な記録はJSONでバックアップしてね。</footer>
 
 <script>
 (function(){
 "use strict";
-const KEY="elevatorObserverRecords_v1";
-let records=[];
-let floor=1;
-const $=id=>document.getElementById(id);
-const e1=$("e1"),e2=$("e2");
-for(let f=1;f<=10;f++){
-  e1.add(new Option(f+"階",String(f)));
-  e2.add(new Option(f+"階",String(f)));
-}
-e1.value="1";e2.value="1";
 
-try {
-  const saved=localStorage.getItem(KEY);
-  records=saved?JSON.parse(saved):[];
-  if(!Array.isArray(records)) records=[];
-} catch(err) {
-  records=[];
-  $("message").textContent="保存済み記録を読み込めなかったよ。";
+const KEY = "elevatorObserverRecords_v1";
+let records = [];
+let floor = 1;
+let storageAvailable = true;
+
+const $ = id => document.getElementById(id);
+const e1 = $("e1");
+const e2 = $("e2");
+
+for (const select of [e1, e2]) {
+  for (let f = 1; f <= 10; f++) {
+    select.add(new Option(f + "階", String(f)));
+  }
+  select.add(new Option("不明・移動中", "?"));
 }
 
-function persist(){
+function makeId() {
+  return Date.now().toString(36) + "-" +
+    Math.random().toString(36).slice(2, 10);
+}
+
+function periodFor(date) {
+  const h = date.getHours();
+  if (h >= 5 && h <= 8) return "早朝（5〜8時）";
+  if (h >= 9 && h <= 11) return "午前（9〜11時）";
+  if (h >= 12 && h <= 15) return "昼（12〜15時）";
+  if (h >= 16 && h <= 18) return "夕方（16〜18時）";
+  if (h >= 19 && h <= 22) return "夜（19〜22時）";
+  return "深夜（23〜4時）";
+}
+
+function normalizeRecord(r) {
+  if (!r || typeof r !== "object") return null;
+
+  const recFloor = Number(r.floor);
+  const date = new Date(r.time);
+
+  if (!Number.isInteger(recFloor) ||
+      recFloor < 1 || recFloor > 10 ||
+      !Number.isFinite(date.getTime())) return null;
+
+  function position(v) {
+    if (v === null || v === "?" || v === "") return null;
+    const n = Number(v);
+    return Number.isInteger(n) && n >= 1 && n <= 10 ? n : null;
+  }
+
+  function validPosition(v) {
+    return v === null || v === "?" ||
+      (Number.isInteger(Number(v)) &&
+       Number(v) >= 1 && Number(v) <= 10);
+  }
+
+  if (!validPosition(r.e1) || !validPosition(r.e2)) return null;
+
+  return {
+    id: typeof r.id === "string" && r.id ? r.id : makeId(),
+    time: date.toISOString(),
+    floor: recFloor,
+    e1: position(r.e1),
+    e2: position(r.e2),
+    period: periodFor(date)
+  };
+}
+
+function showMessage(message, isError) {
+  const el = $("message");
+  el.textContent = message || "";
+  el.className = "status" +
+    (isError ? " error" : (message ? " ok" : ""));
+}
+
+function loadRecords() {
   try {
-    localStorage.setItem(KEY,JSON.stringify(records));
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      throw new Error("記録データの形式が違います");
+    }
+    return parsed.map(normalizeRecord).filter(Boolean);
+  } catch (err) {
+    storageAvailable = false;
+    showMessage(
+      "保存済みの記録を読み込めなかったよ。Safariの保存設定を確認してね。",
+      true
+    );
+    return [];
+  }
+}
+
+function saveRecords(next) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(next));
+    records = next;
+    storageAvailable = true;
     return true;
-  } catch(err) {
-    $("message").textContent="保存できなかったよ。Safariの設定や空き容量を確認してね。";
+  } catch (err) {
+    storageAvailable = false;
+    showMessage(
+      "保存できなかったよ。ブラウザの保存設定や空き容量を確認してね。",
+      true
+    );
     return false;
   }
 }
-function escapeHTML(value){
-  return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c]));
 }
-function formatDate(iso){
-  const d=new Date(iso);
-  return d.toLocaleString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
-}
-function updateFloorButtons(){
-  document.querySelectorAll("#myFloor button").forEach(b=>{
-    b.classList.toggle("selected",Number(b.dataset.value)===floor);
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
   });
 }
-document.querySelectorAll("#myFloor button").forEach(b=>{
-  b.addEventListener("click",()=>{
-    floor=Number(b.dataset.value);
+
+/* hit = 1台以上が自分の階、miss = 2台とも位置が分かり不在、
+   unknown = 結果を確定できない */
+function outcome(r) {
+  if (r.e1 === r.floor || r.e2 === r.floor) return "hit";
+  if (r.e1 !== null && r.e2 !== null) return "miss";
+  return "unknown";
+}
+
+function percent(n, d) {
+  return d ? Math.round(n / d * 100) + "%" : "—";
+}
+
+function updateFloorButtons() {
+  document.querySelectorAll("#myFloor button").forEach(b => {
+    b.classList.toggle("selected", Number(b.dataset.value) === floor);
+  });
+}
+
+document.querySelectorAll("#myFloor button").forEach(b => {
+  b.addEventListener("click", () => {
+    floor = Number(b.dataset.value);
     updateFloorButtons();
-    $("message").textContent="";
+    showMessage("", false);
   });
 });
-function hasElevator(r){
-  return r.e1===r.floor || r.e2===r.floor;
-}
-function pct(n,d){return d?Math.round(n/d*100)+"%":"—";}
-function render(){
-  $("total").textContent=records.length+"回";
-  const hits=records.filter(hasElevator).length;
-  $("rate").textContent=pct(hits,records.length);
-  $("rateDetail").textContent=records.length
-    ?hits+"回で1台以上が自分の階にいたよ（全"+records.length+"回）。"
-    :"記録が増えると、ここに結果が表示されるよ。";
-  $("byFloor").innerHTML=[1,9].map(f=>{
-    const rs=records.filter(r=>r.floor===f);
-    const h=rs.filter(hasElevator).length;
-    return '<div style="padding:9px 0;border-bottom:1px solid #eaecf0">'+
-      '<div style="display:flex;justify-content:space-between;gap:8px"><strong>'+f+'階での観測</strong><strong>'+pct(h,rs.length)+'</strong></div>'+
-      '<div class="small">'+rs.length+'回中 '+h+'回で1台以上がいた</div></div>';
+
+function render() {
+  $("total").textContent = records.length + "回";
+
+  const known = records.filter(r => outcome(r) !== "unknown");
+  const hits = known.filter(r => outcome(r) === "hit").length;
+
+  $("rate").textContent = percent(hits, known.length);
+  $("rateDetail").textContent = known.length
+    ? "判定できた" + known.length + "回中、" + hits +
+      "回で1台以上が自分の階にいたよ。結果不明は" +
+      (records.length - known.length) + "回。"
+    : "結果を判定できる記録がまだないよ。";
+
+  $("byFloor").innerHTML = [1, 9].map(f => {
+    const subset = records.filter(r => r.floor === f);
+    const valid = subset.filter(r => outcome(r) !== "unknown");
+    const h = valid.filter(r => outcome(r) === "hit").length;
+
+    return '<div style="padding:10px 0;border-bottom:1px solid #eaecf0">' +
+      '<div style="display:flex;justify-content:space-between;gap:8px">' +
+      '<strong>' + f + '階での観測</strong><strong>' +
+      percent(h, valid.length) + '</strong></div>' +
+      '<div class="small">判定可能 ' + valid.length +
+      '回中 ' + h + '回で1台以上がいた（全記録 ' +
+      subset.length + '回）</div></div>';
   }).join("");
-  if(!records.length){
-    $("history").innerHTML='<div class="empty">まだ記録がないよ。</div>';
+
+  if (!records.length) {
+    $("history").innerHTML = '<div class="empty">まだ記録がないよ。</div>';
     return;
   }
-  $("history").innerHTML=records.slice().reverse().map(r=>{
-    const originalIndex=records.findIndex(x=>x.id===r.id);
-    return '<div class="entry"><div class="entrytop"><strong>'+escapeHTML(formatDate(r.time))+'</strong>'+
-      '<button data-delete="'+escapeHTML(r.id)+'">削除</button></div>'+
-      '<div style="margin-top:7px">'+r.floor+'階で観測 ・ '+escapeHTML(r.period)+'</div>'+
-      '<div class="small">エレベーター1：'+r.e1+'階 ／ エレベーター2：'+r.e2+'階</div>'+
-      '<div class="small">'+(hasElevator(r)?"自分の階に1台以上いた":"自分の階にはいなかった")+'</div></div>';
+
+  $("history").innerHTML = records.slice().reverse().map(r => {
+    const result = outcome(r);
+    const resultText = result === "hit"
+      ? "自分の階に1台以上いた"
+      : result === "miss"
+        ? "自分の階にはいなかった"
+        : "結果不明（割合の計算対象外）";
+
+    const pos = v => v === null ? "不明・移動中" : v + "階";
+
+    return '<div class="entry">' +
+      '<div class="entrytop"><strong>' +
+      escapeHTML(formatDate(r.time)) +
+      '</strong><button type="button" data-delete="' +
+      escapeHTML(r.id) + '">削除</button></div>' +
+      '<div style="margin-top:7px">' + r.floor +
+      '階で観測 ・ ' + escapeHTML(r.period) + '</div>' +
+      '<div class="small">エレベーター1：' + pos(r.e1) +
+      ' ／ エレベーター2：' + pos(r.e2) + '</div>' +
+      '<div class="small">' + resultText + '</div></div>';
   }).join("");
-  $("history").querySelectorAll("[data-delete]").forEach(b=>{
-    b.addEventListener("click",()=>{
-      const id=b.dataset.delete;
-      if(!confirm("この記録を削除する？")) return;
-      records=records.filter(r=>r.id!==id);
-      persist();render();
+
+  $("history").querySelectorAll("[data-delete]").forEach(b => {
+    b.addEventListener("click", () => {
+      if (!confirm("この記録を削除する？")) return;
+      const next = records.filter(r => r.id !== b.dataset.delete);
+      if (saveRecords(next)) {
+        render();
+        showMessage("記録を削除したよ。", false);
+      }
     });
   });
 }
-$("save").addEventListener("click",()=>{
-  const record={
-    id:Date.now().toString()+"-"+Math.random().toString(36).slice(2,8),
-    time:new Date().toISOString(),
-    floor:floor,
-    e1:Number(e1.value),
-    e2:Number(e2.value),
-    period:$("period").value
-  };
-  records.push(record);
-  if(persist()){
-    $("message").textContent="記録したよ！ 合計 "+records.length+" 回。";
-    render();
-  } else {
-    records.pop();
-  }
-});
-function csvText(){
-  const rows=[["日時","観測した階","エレベーター1の階","エレベーター2の階","時間帯","自分の階に1台以上いた"]];
-  records.forEach(r=>rows.push([formatDate(r.time),r.floor,r.e1,r.e2,r.period,hasElevator(r)?"はい":"いいえ"]));
-  return "\uFEFF"+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+
+function selectedPosition(select) {
+  return select.value === "?" ? null : Number(select.value);
 }
-$("export").addEventListener("click",()=>{
-  if(!records.length){alert("まだ記録がないよ。");return;}
-  const blob=new Blob([csvText()],{type:"text/csv;charset=utf-8;"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;a.download="elevator-observations.csv";
-  document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1500);
-});
-$("copy").addEventListener("click",async()=>{
-  if(!records.length){alert("まだ記録がないよ。");return;}
-  try{
-    await navigator.clipboard.writeText(csvText());
-    alert("CSVをコピーしたよ！ メモなどに貼り付けて保存してね。");
-  }catch(err){
-    alert("コピーできなかったよ。Safariの共有・ダウンロード機能を使ってみてね。");
+
+function updateClock() {
+  const now = new Date();
+  $("timeNow").textContent = "記録時刻：" +
+    now.toLocaleString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    }) + "（時間帯は自動判定）";
+}
+
+$("save").addEventListener("click", () => {
+  if (e1.value === "" || e2.value === "") {
+    showMessage(
+      "エレベーター2台の位置を選んでね。不明な場合は「不明・移動中」でOK。",
+      true
+    );
+    return;
+  }
+
+  const now = new Date();
+  const record = {
+    id: makeId(),
+    time: now.toISOString(),
+    floor: floor,
+    e1: selectedPosition(e1),
+    e2: selectedPosition(e2),
+    period: periodFor(now)
+  };
+
+  if (saveRecords(records.concat(record))) {
+    render();
+    updateClock();
+    showMessage("記録したよ！ 合計 " + records.length + "回。", false);
+    e1.value = "";
+    e2.value = "";
   }
 });
-$("clear").addEventListener("click",()=>{
-  if(!records.length){alert("削除する記録はないよ。");return;}
-  if(!confirm("すべての観測記録を削除するよ。この操作は元に戻せないけど、本当にいい？")) return;
-  records=[];
-  if(persist()){render();$("message").textContent="すべて削除したよ。";}
+
+function csvText() {
+  const rows = [[
+    "日時", "観測した階", "エレベーター1の位置",
+    "エレベーター2の位置", "時間帯", "結果"
+  ]];
+
+  records.forEach(r => {
+    const result = outcome(r) === "hit"
+      ? "いた"
+      : outcome(r) === "miss" ? "いなかった" : "不明";
+
+    rows.push([
+      formatDate(r.time),
+      r.floor,
+      r.e1 === null ? "不明・移動中" : r.e1 + "階",
+      r.e2 === null ? "不明・移動中" : r.e2 + "階",
+      r.period,
+      result
+    ]);
+  });
+
+  return "\uFEFF" + rows.map(row =>
+    row.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")
+  ).join("\r\n");
+}
+
+async function shareOrDownload(filename, content, type) {
+  const blob = new Blob([content], {type: type});
+
+  try {
+    const file = new File([blob], filename, {type: type});
+    if (navigator.canShare &&
+        navigator.canShare({files: [file]}) &&
+        navigator.share) {
+      await navigator.share({files: [file], title: filename});
+      showMessage(
+        "共有メニューを開いたよ。必要なら「ファイルに保存」を選んでね。",
+        false
+      );
+      return;
+    }
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  showMessage("ファイルの保存画面が出たら保存してね。", false);
+}
+
+$("jsonExport").addEventListener("click", async () => {
+  if (!records.length) {
+    alert("まだ記録がないよ。");
+    return;
+  }
+
+  const backup = {
+    app: "elevator-observation-notebook",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    records: records
+  };
+
+  await shareOrDownload(
+    "elevator-observations-backup.json",
+    JSON.stringify(backup, null, 2),
+    "application/json"
+  );
 });
+
+$("csvExport").addEventListener("click", async () => {
+  if (!records.length) {
+    alert("まだ記録がないよ。");
+    return;
+  }
+  await shareOrDownload(
+    "elevator-observations.csv",
+    csvText(),
+    "text/csv;charset=utf-8"
+  );
+});
+
+$("csvCopy").addEventListener("click", async () => {
+  if (!records.length) {
+    alert("まだ記録がないよ。");
+    return;
+  }
+
+  const text = csvText();
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      showMessage(
+        "CSVをコピーしたよ。メモなどに貼り付けて保存してね。",
+        false
+      );
+      return;
+    }
+    throw new Error("Clipboard API unavailable");
+  } catch (err) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    area.style.fontSize = "16px";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, area.value.length);
+
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } catch (e) {}
+
+    area.remove();
+    showMessage(
+      copied
+        ? "CSVをコピーしたよ。メモなどに貼り付けて保存してね。"
+        : "コピーできなかったよ。「CSVを書き出す」を使ってみてね。",
+      !copied
+    );
+  }
+});
+
+$("jsonImportButton").addEventListener("click", () => {
+  $("jsonImportFile").click();
+});
+
+$("jsonImportFile").addEventListener("change", () => {
+  const file = $("jsonImportFile").files &&
+    $("jsonImportFile").files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(String(reader.result || ""));
+
+      if (!data ||
+          data.app !== "elevator-observation-notebook" ||
+          !Array.isArray(data.records)) {
+        throw new Error("形式が違います");
+      }
+
+      const next = data.records.map(normalizeRecord).filter(Boolean);
+      if (next.length !== data.records.length) {
+        throw new Error("一部の記録が正しくありません");
+      }
+
+      if (!confirm(
+        "今ある記録を、バックアップの" +
+        next.length + "件で置き換えるよ。続ける？"
+      )) return;
+
+      if (saveRecords(next)) {
+        render();
+        showMessage(
+          "バックアップから" + records.length + "件を読み込んだよ。",
+          false
+        );
+      }
+    } catch (err) {
+      alert("このファイルは、このアプリのJSONバックアップとして読み込めなかったよ。");
+    } finally {
+      $("jsonImportFile").value = "";
+    }
+  };
+
+  reader.onerror = () => {
+    alert("ファイルを読み込めなかったよ。");
+    $("jsonImportFile").value = "";
+  };
+
+  reader.readAsText(file);
+});
+
+$("clear").addEventListener("click", () => {
+  if (!records.length) {
+    alert("削除する記録はないよ。");
+    return;
+  }
+
+  if (!confirm(
+    "すべての観測記録を削除するよ。この操作は元に戻せないけど、本当にいい？"
+  )) return;
+
+  if (saveRecords([])) {
+    render();
+    showMessage("すべての記録を削除したよ。", false);
+  }
+});
+
+records = loadRecords();
+updateFloorButtons();
+updateClock();
 render();
+
+if (!storageAvailable) {
+  showMessage(
+    "保存領域を読み込めなかったよ。記録する前に、Safariの保存設定を確認してね。",
+    true
+  );
+}
 })();
 </script>
 </body>
