@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -6,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f4f7fb">
 <title>エレベーター観測ノート</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23245bdb'/%3E%3Cpath d='M16 7l6 7H10zM16 25l-6-7h12z' fill='white'/%3E%3C/svg%3E">
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#1d2939;background:#f4f7fb}
 *{box-sizing:border-box}
@@ -49,9 +49,9 @@ footer{font-size:12px;color:#667085;line-height:1.6;text-align:center;padding:10
 
 <section class="card">
   <h2>① 今いる階</h2>
-  <div class="choices" id="myFloor">
-    <button type="button" data-value="1" class="selected">1階</button>
-    <button type="button" data-value="9">9階</button>
+  <div class="choices" id="myFloor" role="group" aria-label="今いる階">
+    <button type="button" data-value="1" class="selected" aria-pressed="true">1階</button>
+    <button type="button" data-value="9" aria-pressed="false">9階</button>
   </div>
   <p class="small">観測する場所を選んでね。</p>
 </section>
@@ -84,7 +84,7 @@ footer{font-size:12px;color:#667085;line-height:1.6;text-align:center;padding:10
   <div class="divider"></div>
   <h2 style="font-size:16px">階ごとの結果</h2>
   <div id="byFloor"></div>
-  <p class="notice">割合は「結果を判定できた観測」のうち、自分の階に1台以上いた割合だよ。不明な位置があって結果を確定できない記録は、割合の計算から除外するよ。</p>
+  <p class="notice">割合は「結果を判定できた観測」のうち、自分の階に1台以上いた割合だよ。不明な位置があって結果を確定できない記録は、割合の計算から除外するよ。ただし移動中のエレベーターは自分の階にいないことが多いので、「不明」が多いと実際より割合が高く出るかも。回数が少ないうちは目安として見てね。</p>
 </section>
 
 <section class="card">
@@ -183,17 +183,32 @@ function showMessage(message, isError) {
     (isError ? " error" : (message ? " ok" : ""));
 }
 
+/* 同じIDが重複していたら、後ろの記録に新しいIDを振り直す */
+function uniqueIds(list) {
+  const seen = new Set();
+  return list.map(r => {
+    if (seen.has(r.id)) r = Object.assign({}, r, { id: makeId() });
+    seen.add(r.id);
+    return r;
+  });
+}
+
 function loadRecords() {
+  let raw = null;
   try {
-    const raw = localStorage.getItem(KEY);
+    raw = localStorage.getItem(KEY);
     if (!raw) return [];
 
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
       throw new Error("記録データの形式が違います");
     }
-    return parsed.map(normalizeRecord).filter(Boolean);
+    return uniqueIds(parsed.map(normalizeRecord).filter(Boolean));
   } catch (err) {
+    /* 読めないデータは、上書きされる前に別のキーへ退避しておく */
+    if (raw) {
+      try { localStorage.setItem(KEY + "_unreadable_backup", raw); } catch (e) {}
+    }
     storageAvailable = false;
     showMessage(
       "保存済みの記録を読み込めなかったよ。Safariの保存設定を確認してね。",
@@ -253,7 +268,9 @@ function percent(n, d) {
 
 function updateFloorButtons() {
   document.querySelectorAll("#myFloor button").forEach(b => {
-    b.classList.toggle("selected", Number(b.dataset.value) === floor);
+    const on = Number(b.dataset.value) === floor;
+    b.classList.toggle("selected", on);
+    b.setAttribute("aria-pressed", String(on));
   });
 }
 
@@ -311,7 +328,8 @@ function render() {
       '<div class="entrytop"><strong>' +
       escapeHTML(formatDate(r.time)) +
       '</strong><button type="button" data-delete="' +
-      escapeHTML(r.id) + '">削除</button></div>' +
+      escapeHTML(r.id) + '" aria-label="' +
+      escapeHTML(formatDate(r.time) + 'の記録を削除') + '">削除</button></div>' +
       '<div style="margin-top:7px">' + r.floor +
       '階で観測 ・ ' + escapeHTML(r.period) + '</div>' +
       '<div class="small">エレベーター1：' + pos(r.e1) +
@@ -471,7 +489,8 @@ $("csvCopy").addEventListener("click", async () => {
     return;
   }
 
-  const text = csvText();
+  /* 貼り付け用なので、ファイル用のBOM(見えない文字)は外す */
+  const text = csvText().replace(/^﻿/, "");
 
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -531,10 +550,11 @@ $("jsonImportFile").addEventListener("change", () => {
         throw new Error("形式が違います");
       }
 
-      const next = data.records.map(normalizeRecord).filter(Boolean);
-      if (next.length !== data.records.length) {
+      const normalized = data.records.map(normalizeRecord).filter(Boolean);
+      if (normalized.length !== data.records.length) {
         throw new Error("一部の記録が正しくありません");
       }
+      const next = uniqueIds(normalized);
 
       if (!confirm(
         "今ある記録を、バックアップの" +
@@ -582,6 +602,10 @@ $("clear").addEventListener("click", () => {
 records = loadRecords();
 updateFloorButtons();
 updateClock();
+setInterval(updateClock, 15000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) updateClock();
+});
 render();
 
 if (!storageAvailable) {
